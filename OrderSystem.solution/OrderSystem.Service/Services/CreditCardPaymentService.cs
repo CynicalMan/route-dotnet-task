@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OrderSystem.Core.Services
+namespace OrderSystem.Service.Services
 {
-    public interface IEmailService
+    public class CreditCardPaymentService
     {
-        void SendEmail(string toEmail, string subject);
     }
 }

@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OrderSystem.Core.Services
+namespace OrderSystem.Core
 {
-    public interface IEmailService
+    public interface IDiscountStrategy
     {
-        void SendEmail(string toEmail, string subject);
+        decimal GetDiscount(decimal orderTotal);
     }
 }

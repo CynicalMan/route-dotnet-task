@@ -22,41 +22,35 @@ namespace OrderSystem.APIs.Controllers
         private readonly UserManager<User> _manager;
         private readonly SignInManager<User> _signInManager;
         private readonly ITokenService _tokenService;
+        private readonly IOrderService _orderService;
         private readonly IUnitOfWork _unitOfWork;
 
-        public OrderController(IMapper mapper, UserManager<User> manager, IUnitOfWork unitOfWork, SignInManager<User> signInManager, ITokenService tokenService)
+        public OrderController(IMapper mapper, UserManager<User> manager, IUnitOfWork unitOfWork, SignInManager<User> signInManager, ITokenService tokenService, IOrderService orderService)
         {
             _mapper = mapper;
             _manager = manager;
             _signInManager = signInManager;
             _tokenService = tokenService;
             _unitOfWork = unitOfWork;
+            _orderService = orderService;
         }
 
         [Authorize]
         [HttpPost("")]
-        public async Task<ActionResult<OrderDto>> CreateOrder(OrderDto newOrder)
+        public async Task<ActionResult<CreateOrderDTO>> CreateOrder(CreateOrderDTO newOrder)
         {
             var user = await _manager.GetUserMainAsync(User);
-
             if (user is null)
                 return Unauthorized(new ApiResponse(401));
-
-
-            var order = _mapper.Map<OrderDto, Order>(newOrder);
-
+            var order = _mapper.Map<CreateOrderDTO, Order>(newOrder);
             if (order is null)
             {
                 return BadRequest(new ApiResponse(400));
             }
+            var placedOrder = _orderService.PlaceOrderAsync(order);
 
-
-            var result = _unitOfWork.Repository<Order>().Add(order);
-            _unitOfWork.Repository<Order>().SaveChanges();
-
-            if (!result.IsCompletedSuccessfully)
-                return BadRequest(new ApiResponse(400));
-
+            if (placedOrder.Result is null || placedOrder is null)
+                return BadRequest(new ApiResponse(400,"The Order was not placed due to Insufficient stock"));
             return Ok(order);
         }
 

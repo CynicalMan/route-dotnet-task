@@ -22,6 +22,12 @@ namespace OrderSystem.APIs.Helpers
             CreateMap<OrderDto, Order>();
             CreateMap<Order, OrderDto>();
 
+            CreateMap<CreateOrderDTO, Order>();
+            CreateMap<Order, CreateOrderDTO>();
+
+            CreateMap<CreateOrderItemDTO, OrderItem>();
+            CreateMap<OrderItem, CreateOrderItemDTO>();
+
             CreateMap<CustomerDto, Customer>();
             CreateMap<Customer, CustomerDto>();
 

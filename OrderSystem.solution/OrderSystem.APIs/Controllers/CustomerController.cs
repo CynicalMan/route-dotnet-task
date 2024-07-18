@@ -66,7 +66,7 @@ namespace OrderSystem.APIs.Controllers
         [HttpGet("{id}/orders")]
         public async Task<ActionResult<CustomerDto>> GetOrdersByCustomerId(int id)
         {
-            var user = await _manager.GetUserByIdAsync(id.ToString());
+            var user = await _manager.GetUserMainAsync(User);
             if (user is null)
             {
                 return Unauthorized(new ApiResponse(401));

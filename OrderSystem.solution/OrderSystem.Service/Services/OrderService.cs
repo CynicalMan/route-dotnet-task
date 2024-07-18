@@ -1,5 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using OrderSystem.Core;
 using OrderSystem.Core.Entities.Core;
+using OrderSystem.Core.Services;
+using OrderSystem.Core.Specifications;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,76 +11,136 @@ using System.Threading.Tasks;
 
 namespace OrderSystem.Service.Services
 {
-    public class OrderService
+    public class OrderService : IOrderService
     {
-        //private readonly OrderManagementDbCotext _context;
-        //private readonly IEmailService _emailService;
+        private readonly IEmailService _emailService;
+        private readonly DiscountStrategySelector _discountStrategySelector;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly PayPalPaymentService _payPalPaymentService;
 
-        //public OrderService(OrderManagementDbCotext context, IEmailService emailService)
-        //{
-        //    _context = context;
-        //    _emailService = emailService;
-        //}
+        public OrderService(
+            IEmailService emailService,
+            DiscountStrategySelector discountStrategySelector,
+            IUnitOfWork unitOfWork,
+            PayPalPaymentService payPalPaymentService)
+        {
+            _emailService = emailService;
+            _discountStrategySelector = discountStrategySelector;
+            _unitOfWork = unitOfWork;
+            _payPalPaymentService = payPalPaymentService;
+        }
 
-        //public async Task<Order> PlaceOrderAsync(Order order)
-        //{
-        //    // Validate stock
-        //    foreach (var item in order.OrderItems)
-        //    {
-        //        var product = await _context.Products.FindAsync(item.ProductId);
-        //        if (product == null || product.Stock < item.Quantity)
-        //        {
-        //            throw new InvalidOperationException($"Insufficient stock for product {product?.Name ?? item.ProductId.ToString()}.");
-        //        }
-        //    }
+        public async Task<Order?> PlaceOrderAsync(Order order)
+        {
+            // Validate stock
+            foreach (var item in order.OrderItems)
+            {
+                var spec = new BaseSpecifications<Product>(p => p.Id == item.ProductId);
+                var product = await _unitOfWork.Repository<Product>().GetEntityWithSpecAsync(spec);
+                if (product == null || product.Stock < item.Quantity)
+                {
+                    return null;
+                    //throw new InvalidOperationException($"Insufficient stock for product {product?.Name ?? item.ProductId.ToString()}.");
+                }
+                product.Stock -= item.Quantity;
+                _unitOfWork.Repository<Product>().Update(product);
+            }
+            _unitOfWork.Repository<Product>().SaveChanges();
 
-        //    // Apply tiered discounts
-        //    decimal total = order.OrderItems.Sum(item => item.Quantity * item.UnitPrice);
-        //    if (total > 200)
-        //    {
-        //        order.Discount = 0.10m;
-        //    }
-        //    else if (total > 100)
-        //    {
-        //        order.Discount = 0.05m;
-        //    }
-        //    else
-        //    {
-        //        order.Discount = 0;
-        //    }
-        //    order.Total = total - (total * order.Discount);
+            order.Customer = await _unitOfWork.Repository<Customer>().GetEntityWithSpecAsync(new BaseSpecifications<Customer>(c => c.Id == order.CustomerId));
 
-        //    _context.Orders.Add(order);
-        //    await _context.SaveChangesAsync();
+            // Apply tiered discounts
+            ApplyDiscountsToOrderItems(order);
 
-        //    var invoice = new Invoice
-        //    {
-        //        OrderId = order.Id,
-        //        Amount = order.Total,
-        //        GeneratedAt = DateTime.UtcNow
-        //    };
-        //    _context.Invoices.Add(invoice);
-        //    await _context.SaveChangesAsync();
+            order.TotalAmount = order.OrderItems.Sum(item => item.Quantity * item.UnitPrice);
+            order.OrderDate = DateTime.Now;
+            order.Status = "Pending Payment"; // Initial status before payment
+            order.InsertDate = DateTime.Now;
 
-        //    await _emailService.SendEmailAsync(order.CustomerEmail, "Order Placed", $"Your order {order.Id} has been placed.");
+            // Create PayPal payment
+            var apiContext = _payPalPaymentService.GetAPIContext();
+            var payment = _payPalPaymentService.CreatePayment(apiContext, order.Id.ToString());
 
-        //    return order;
-        //}
 
-        //public async Task UpdateOrderStatusAsync(int orderId, OrderStatus newStatus)
-        //{
-        //    var order = await _context.Orders.FindAsync(orderId);
-        //    if (order == null)
-        //    {
-        //        throw new InvalidOperationException("Order not found.");
-        //    }
+            await _unitOfWork.Repository<Order>().Add(order);
+            _unitOfWork.Repository<Order>().SaveChanges();
 
-        //    order.Status = newStatus;
-        //    await _context.SaveChangesAsync();
+            // Create and add invoice
+            var invoice = new Invoice
+            {
+                Order = order,
+                OrderId = order.Id,
+                TotalAmount = order.TotalAmount,
+                InsertDate = DateTime.Now
+            };
 
-        //    await _emailService.SendEmailAsync(order.CustomerEmail, "Order Status Updated", $"Your order {order.Id} status has been updated to {newStatus}.");
-        //}
+            await _unitOfWork.Repository<Invoice>().Add(invoice);
+            _unitOfWork.Repository<Invoice>().SaveChanges();
+
+            order.Invoice = invoice;
+
+            //await _emailService.SendEmailAsync(order.CustomerEmail, "Order Placed", $"Your order {order.Id} has been placed.");
+
+            return order;
+        }
+
+        public void ApplyDiscountsToOrderItems(Order order)
+        {
+            decimal orderTotal = order.OrderItems.Sum(item => item.Quantity * item.UnitPrice);
+            IDiscountStrategy discountStrategy = _discountStrategySelector.SelectStrategy(orderTotal);
+            decimal discountPercentage = discountStrategy.GetDiscount(orderTotal);
+            order.TotalAmount = orderTotal - (orderTotal * discountPercentage);
+
+            foreach (var item in order.OrderItems)
+            {
+                decimal itemTotalPrice = item.Quantity * item.UnitPrice;
+                decimal itemDiscount = itemTotalPrice * discountPercentage;
+                item.UnitPrice -= item.UnitPrice * discountPercentage;
+                item.Discount = discountPercentage * 100;
+            }
+        }
+
+        public async Task UpdateOrderStatusAsync(int orderId, string newStatus)
+        {
+            var spec = new BaseSpecifications<Order>(o => o.Id == orderId);
+            var order = await _unitOfWork.Repository<Order>().GetEntityWithSpecAsync(spec);
+            if (order == null)
+            {
+                throw new InvalidOperationException("Order not found.");
+            }
+
+            order.Status = newStatus;
+            _unitOfWork.Repository<Order>().Update(order);
+            _unitOfWork.Repository<Order>().SaveChanges();
+
+            //await _emailService.SendEmailAsync(order.CustomerEmail, "Order Status Updated", $"Your order {order.Id} status has been updated to {newStatus}.");
+        }
+
+        public async Task<Order?> CompletePaymentAsync(string payerId, string paymentId)
+        {
+            var apiContext = _payPalPaymentService.GetAPIContext();
+            var payment = _payPalPaymentService.ExecutePayment(apiContext, payerId, paymentId);
+
+            if (payment.state.ToLower() != "approved")
+            {
+                return null; // Payment not approved
+            }
+
+            var orderId = int.Parse(payment.transactions[0].item_list.items[0].sku);
+            var order = await _unitOfWork.Repository<Order>()
+                        .GetEntityWithSpecAsync(new BaseSpecifications<Order>(o => o.Id == orderId));
+            if (order == null)
+            {
+                throw new InvalidOperationException("Order not found.");
+            }
+
+            order.Status = "Order Paid"; // Update status after successful payment
+            _unitOfWork.Repository<Order>().Update(order);
+            _unitOfWork.Repository<Order>().SaveChanges();
+
+            //await _emailService.SendEmailAsync(order.CustomerEmail, "Order Payment Completed", $"Your order {order.Id} has been paid.");
+
+            return order;
+        }
     }
-
 }
-
