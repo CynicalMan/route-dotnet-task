@@ -17,22 +17,24 @@ namespace OrderSystem.Service.Services
         private readonly DiscountStrategySelector _discountStrategySelector;
         private readonly IUnitOfWork _unitOfWork;
         private readonly PayPalPaymentService _payPalPaymentService;
+        private readonly CreditCardPaymentService _creditCardPaymentService;
 
         public OrderService(
             IEmailService emailService,
             DiscountStrategySelector discountStrategySelector,
             IUnitOfWork unitOfWork,
-            PayPalPaymentService payPalPaymentService)
+            PayPalPaymentService payPalPaymentService,
+            CreditCardPaymentService creditCardPaymentService)
         {
             _emailService = emailService;
             _discountStrategySelector = discountStrategySelector;
             _unitOfWork = unitOfWork;
             _payPalPaymentService = payPalPaymentService;
+            _creditCardPaymentService = creditCardPaymentService;
         }
 
         public async Task<Order?> PlaceOrderAsync(Order order)
         {
-            // Validate stock
             foreach (var item in order.OrderItems)
             {
                 var spec = new BaseSpecifications<Product>(p => p.Id == item.ProductId);
@@ -62,7 +64,7 @@ namespace OrderSystem.Service.Services
                 var payment = _payPalPaymentService.CreatePayment(apiContext, order.Id.ToString());
             }
             else if (order.PaymentMethod == "creditcard"){
-
+                var paymentIntent = await _creditCardPaymentService.CreateOrUpdatePaymentIntentId(order);
             }
 
             await _unitOfWork.Repository<Order>().Add(order);
@@ -81,7 +83,7 @@ namespace OrderSystem.Service.Services
 
             order.Invoice = invoice;
 
-            //await _emailService.SendEmailAsync(order.CustomerEmail, "Order Placed", $"Your order {order.Id} has been placed.");
+             _emailService.SendEmail(order.Customer.Email, "Order Placed", $"Your order {order.Id} has been placed.");
 
             return order;
         }
@@ -115,7 +117,7 @@ namespace OrderSystem.Service.Services
             _unitOfWork.Repository<Order>().Update(order);
             _unitOfWork.Repository<Order>().SaveChanges();
 
-            //await _emailService.SendEmailAsync(order.CustomerEmail, "Order Status Updated", $"Your order {order.Id} status has been updated to {newStatus}.");
+            _emailService.SendEmail(order.Customer.Email, "Order Status Updated", $"Your order {order.Id} status has been updated to {newStatus}.");
         }
 
         public async Task<Order?> CompletePaymentAsync(string payerId, string paymentId)

@@ -14,13 +14,11 @@ namespace OrderSystem.Service.Services
     public class CreditCardPaymentService
     {
         private readonly IConfiguration _configuration;
-        private readonly IGenericRepository<Order> _orderRepository;
         private readonly string _secretKey;
 
-        public CreditCardPaymentService(IConfiguration configuration, IGenericRepository<Order> orderRepository)
+        public CreditCardPaymentService(IConfiguration configuration)
         {
             _configuration = configuration;
-            _orderRepository = orderRepository;
             _secretKey = _configuration["StripeKeys:SecretKey"];
             StripeConfiguration.ApiKey = _secretKey;
         }
@@ -39,8 +37,6 @@ namespace OrderSystem.Service.Services
 
             
             order.InsertDate = DateTime.Now;
-            await _orderRepository.Add(order);
-            _orderRepository.SaveChanges();
 
             return paymentIntent;
         }

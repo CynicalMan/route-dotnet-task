@@ -8,6 +8,6 @@ namespace OrderSystem.Core.Services
 {
     public interface IEmailService
     {
-        void SendEmail(string toEmail, string subject);
+        void SendEmail(string toEmail, string subject, string message);
     }
 }
