@@ -49,23 +49,25 @@ namespace OrderSystem.Service.Services
 
             order.Customer = await _unitOfWork.Repository<Customer>().GetEntityWithSpecAsync(new BaseSpecifications<Customer>(c => c.Id == order.CustomerId));
 
-            // Apply tiered discounts
             ApplyDiscountsToOrderItems(order);
 
             order.TotalAmount = order.OrderItems.Sum(item => item.Quantity * item.UnitPrice);
             order.OrderDate = DateTime.Now;
-            order.Status = "Pending Payment"; // Initial status before payment
+            order.Status = "Pending Payment"; 
             order.InsertDate = DateTime.Now;
 
-            // Create PayPal payment
-            var apiContext = _payPalPaymentService.GetAPIContext();
-            var payment = _payPalPaymentService.CreatePayment(apiContext, order.Id.ToString());
+            if (order.PaymentMethod == "paypal")
+            {
+                var apiContext = _payPalPaymentService.GetAPIContext();
+                var payment = _payPalPaymentService.CreatePayment(apiContext, order.Id.ToString());
+            }
+            else if (order.PaymentMethod == "creditcard"){
 
+            }
 
             await _unitOfWork.Repository<Order>().Add(order);
             _unitOfWork.Repository<Order>().SaveChanges();
 
-            // Create and add invoice
             var invoice = new Invoice
             {
                 Order = order,
@@ -123,7 +125,7 @@ namespace OrderSystem.Service.Services
 
             if (payment.state.ToLower() != "approved")
             {
-                return null; // Payment not approved
+                return null; 
             }
 
             var orderId = int.Parse(payment.transactions[0].item_list.items[0].sku);
@@ -134,7 +136,7 @@ namespace OrderSystem.Service.Services
                 throw new InvalidOperationException("Order not found.");
             }
 
-            order.Status = "Order Paid"; // Update status after successful payment
+            order.Status = "Order Paid"; 
             _unitOfWork.Repository<Order>().Update(order);
             _unitOfWork.Repository<Order>().SaveChanges();
 
@@ -142,5 +144,7 @@ namespace OrderSystem.Service.Services
 
             return order;
         }
+
+
     }
 }

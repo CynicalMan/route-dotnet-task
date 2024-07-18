@@ -22,6 +22,7 @@ namespace OrderSystem.APIs.Exstentions
             Services.AddScoped<IOrderService, OrderService>();
             Services.AddScoped<IEmailService, EmailService>();
             Services.AddScoped<PayPalPaymentService>();
+            Services.AddScoped<CreditCardPaymentService>();
             Services.AddSingleton<IDiscountStrategy, HighTierDiscount>();
             Services.AddSingleton<IDiscountStrategy, LowTierDiscount>();
             Services.AddSingleton<IDiscountStrategy, NoDiscount>();
