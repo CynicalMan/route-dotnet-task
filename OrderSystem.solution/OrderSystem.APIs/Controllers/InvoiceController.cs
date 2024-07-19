@@ -12,6 +12,7 @@ using OrderSystem.Core.Entities.Core;
 using OrderSystem.Core.Entities.Identity;
 using OrderSystem.Core.Services;
 using OrderSystem.Core.Specifications;
+using OrderSystem.Core.Specifications.Core;
 
 namespace OrderSystem.APIs.Controllers
 {
@@ -44,7 +45,7 @@ namespace OrderSystem.APIs.Controllers
                 return Unauthorized(new ApiResponse(401));
             }
 
-            var spec = new BaseSpecifications<Invoice>();
+            var spec = new InvoiceWithOrderSpecification();
             var invoices = await _unitOfWork.Repository<Invoice>().GetAllWithSpecAsync(spec);
 
             if (invoices == null)
@@ -68,7 +69,7 @@ namespace OrderSystem.APIs.Controllers
             }
 
 
-            var spec = new BaseSpecifications<Invoice>(p => p.Id == id);
+            var spec = new InvoiceWithOrderSpecification(id);
             var invoice = await _unitOfWork.Repository<Invoice>().GetEntityWithSpecAsync(spec);
 
             if (invoice == null)

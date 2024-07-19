@@ -80,7 +80,7 @@ namespace OrderSystem.APIs.Controllers
                 return NotFound(new ApiResponse(404, "Orders not found for the customer"));
             }
 
-            var ordersToReturn = _mapper.Map<IReadOnlyList<Order>, IReadOnlyList<OrderDto>>(orders);
+            var ordersToReturn = _mapper.Map<IReadOnlyList<Order>, IReadOnlyList<OrderDTO>>(orders);
             return Ok(ordersToReturn);
         }
 

@@ -41,15 +41,15 @@ namespace OrderSystem.Service.Services
                 var product = await _unitOfWork.Repository<Product>().GetEntityWithSpecAsync(spec);
                 if (product == null || product.Stock < item.Quantity)
                 {
-                    return null;
-                    //throw new InvalidOperationException($"Insufficient stock for product {product?.Name ?? item.ProductId.ToString()}.");
+                    throw new InvalidOperationException("The order was not placed due to insufficient stock.");
                 }
                 product.Stock -= item.Quantity;
                 _unitOfWork.Repository<Product>().Update(product);
+                item.Product = product;
             }
             _unitOfWork.Repository<Product>().SaveChanges();
 
-            order.Customer = await _unitOfWork.Repository<Customer>().GetEntityWithSpecAsync(new BaseSpecifications<Customer>(c => c.Id == order.CustomerId));
+            
 
             ApplyDiscountsToOrderItems(order);
 
@@ -92,20 +92,20 @@ namespace OrderSystem.Service.Services
         {
             if (order == null || order.OrderItems == null) throw new ArgumentNullException();
 
-            decimal orderTotal = order.OrderItems.Sum(item => item.Quantity * item.UnitPrice);
+            decimal orderTotal = order.OrderItems.Sum(item => item.Quantity * item.Product.Price);
             IDiscountStrategy discountStrategy = _discountStrategySelector.SelectStrategy(orderTotal);
             if (discountStrategy == null) throw new InvalidOperationException("Discount strategy is null.");
 
             decimal discountPercentage = discountStrategy.GetDiscount(orderTotal);
-            order.TotalAmount = orderTotal - (orderTotal * discountPercentage);
 
             foreach (var item in order.OrderItems)
             {
+                item.UnitPrice = item.Product.Price - (item.Product.Price * discountPercentage);
                 decimal itemTotalPrice = item.Quantity * item.UnitPrice;
-                decimal itemDiscount = itemTotalPrice * discountPercentage;
-                item.UnitPrice -= item.UnitPrice * discountPercentage;
                 item.Discount = discountPercentage;
             }
+
+            order.TotalAmount = order.OrderItems.Sum(item => item.Quantity * item.UnitPrice);
         }
 
 
