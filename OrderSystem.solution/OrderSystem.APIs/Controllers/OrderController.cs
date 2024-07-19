@@ -55,29 +55,6 @@ namespace OrderSystem.APIs.Controllers
         }
 
         [Authorize]
-        [HttpGet("")]
-        public async Task<ActionResult<OrderDto>> GetOrders()
-        {
-            var user = await _manager.GetUserMainAsync(User);
-            if (user is null)
-            {
-                return Unauthorized(new ApiResponse(401));
-            }
-
-            var spec = new BaseSpecifications<Order>();
-            var orders = await _unitOfWork.Repository<Order>().GetAllWithSpecAsync(spec);
-
-            if (orders == null)
-            {
-                return NotFound(new ApiResponse(404, "no orders found"));
-            }
-
-            var ordersToReturn = _mapper.Map<IReadOnlyList<Order>, IReadOnlyList<OrderDto>>(orders);
-            return Ok(ordersToReturn);
-        }
-
-
-        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<OrderDto>> GetOrderDetailsById(int id)
         {
@@ -100,10 +77,9 @@ namespace OrderSystem.APIs.Controllers
             return Ok(orderToReturn);
         }
 
-
-        [Authorize]
-        [HttpPut("{id}")]
-        public async Task<ActionResult<OrderDto>> UpdateOrderStatusById(OrderDto newOrder, int id)
+        [Authorize(Roles = "Admin")]
+        [HttpGet("")]
+        public async Task<ActionResult<OrderDto>> GetOrders()
         {
             var user = await _manager.GetUserMainAsync(User);
             if (user is null)
@@ -111,20 +87,35 @@ namespace OrderSystem.APIs.Controllers
                 return Unauthorized(new ApiResponse(401));
             }
 
-            var spec = new BaseSpecifications<Order>(p => p.Id == id);
-            var order = await _unitOfWork.Repository<Order>().GetEntityWithSpecAsync(spec);
+            var spec = new BaseSpecifications<Order>();
+            var orders = await _unitOfWork.Repository<Order>().GetAllWithSpecAsync(spec);
+
+            if (orders == null)
+            {
+                return NotFound(new ApiResponse(404, "no orders found"));
+            }
+
+            var ordersToReturn = _mapper.Map<IReadOnlyList<Order>, IReadOnlyList<OrderDto>>(orders);
+            return Ok(ordersToReturn);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id}")]
+        public async Task<ActionResult<OrderDto>> UpdateOrderStatusById(string newStatus, int id)
+        {
+            var user = await _manager.GetUserMainAsync(User);
+            if (user is null)
+            {
+                return Unauthorized(new ApiResponse(401));
+            }
+            var order = await _orderService.UpdateOrderStatusAsync(id, newStatus);
 
             if (order == null)
             {
-                return NotFound(new ApiResponse(404, "Order not found"));
+                return BadRequest(new ApiResponse(400, "The Order status was not updated"));
             }
 
-            _mapper.Map(newOrder, order);
-            _unitOfWork.Repository<Order>().Update(order);
-            _unitOfWork.Repository<Order>().SaveChanges();
-
-            var orderToReturn = _mapper.Map<Order, OrderDto>(order);
-            return Ok(orderToReturn);
+            return Ok(order);
         }
 
 

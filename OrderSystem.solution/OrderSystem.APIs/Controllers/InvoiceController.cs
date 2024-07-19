@@ -34,7 +34,7 @@ namespace OrderSystem.APIs.Controllers
             _unitOfWork = unitOfWork;
         }
 
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         [HttpGet("")]
         public async Task<ActionResult<InvoiceDto>> GetInvoices()
         {
@@ -57,7 +57,7 @@ namespace OrderSystem.APIs.Controllers
         }
 
 
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         [HttpGet("{id}")]
         public async Task<ActionResult<InvoiceDto>> GetInvoiceDetailsById(int id)
         {

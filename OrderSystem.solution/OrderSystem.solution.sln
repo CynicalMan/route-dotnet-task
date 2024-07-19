@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.35004.147
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderSystem.APIs", "OrderSystem.APIs\OrderSystem.APIs.csproj", "{BDBA7DFA-CC39-4761-9409-388F9E040820}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OrderSystem.APIs", "OrderSystem.APIs\OrderSystem.APIs.csproj", "{BDBA7DFA-CC39-4761-9409-388F9E040820}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderSystem.Core", "OrderSystem.Core\OrderSystem.Core.csproj", "{ADF0A060-62D1-4E80-B21A-48B655A2C68F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OrderSystem.Core", "OrderSystem.Core\OrderSystem.Core.csproj", "{ADF0A060-62D1-4E80-B21A-48B655A2C68F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderSystem.Service", "OrderSystem.Service\OrderSystem.Service.csproj", "{8C7A4ACA-86FF-47F7-BCA5-B92108CD235C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OrderSystem.Service", "OrderSystem.Service\OrderSystem.Service.csproj", "{8C7A4ACA-86FF-47F7-BCA5-B92108CD235C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderSystem.Repository", "OrderSystem.Repository\OrderSystem.Repository.csproj", "{053DAA15-05F4-4501-9F24-C81358D8C6E7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OrderSystem.Repository", "OrderSystem.Repository\OrderSystem.Repository.csproj", "{053DAA15-05F4-4501-9F24-C81358D8C6E7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderSystem.Tests", "OrderSystem.Tests\OrderSystem.Tests.csproj", "{98AC9080-708C-466C-ACCA-F30B5642BC32}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{053DAA15-05F4-4501-9F24-C81358D8C6E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{053DAA15-05F4-4501-9F24-C81358D8C6E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{053DAA15-05F4-4501-9F24-C81358D8C6E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98AC9080-708C-466C-ACCA-F30B5642BC32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98AC9080-708C-466C-ACCA-F30B5642BC32}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98AC9080-708C-466C-ACCA-F30B5642BC32}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98AC9080-708C-466C-ACCA-F30B5642BC32}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

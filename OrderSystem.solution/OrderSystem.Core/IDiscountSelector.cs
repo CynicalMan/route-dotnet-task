@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OrderSystem.Service.Services
+namespace OrderSystem.Core
 {
-    public class PaymentService
+    public interface IDiscountStrategySelector
     {
+        IDiscountStrategy SelectStrategy(decimal orderTotal);
     }
 }

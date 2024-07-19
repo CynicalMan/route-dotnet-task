@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace OrderSystem.Service
 {
-    public class DiscountStrategySelector
+    public class DiscountStrategySelector : IDiscountStrategySelector
     {
         private readonly IDiscountStrategy _highTierDiscountStrategy;
         private readonly IDiscountStrategy _mediumTierDiscountStrategy;

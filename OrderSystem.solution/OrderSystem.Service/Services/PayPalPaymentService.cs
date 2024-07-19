@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using OrderSystem.Core.Services;
 using PayPal.Api;
 using System;
 using System.Collections.Generic;
 
 namespace OrderSystem.Service.Services
 {
-    public class PayPalPaymentService
+    public class PayPalPaymentService : IPayPalService
     {
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;

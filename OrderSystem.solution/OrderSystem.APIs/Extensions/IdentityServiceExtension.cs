@@ -41,8 +41,6 @@ namespace OrderSystem.APIs.Exstentions
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Key"]))
-
-
                 };
             });
             return Services;

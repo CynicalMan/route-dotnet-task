@@ -21,12 +21,18 @@ namespace OrderSystem.APIs.Exstentions
             Services.AddAutoMapper(typeof(MappingProfiles));
             Services.AddScoped<IOrderService, OrderService>();
             Services.AddScoped<IEmailService, EmailService>();
-            Services.AddScoped<PayPalPaymentService>();
-            Services.AddScoped<CreditCardPaymentService>();
-            Services.AddSingleton<IDiscountStrategy, HighTierDiscount>();
-            Services.AddSingleton<IDiscountStrategy, LowTierDiscount>();
-            Services.AddSingleton<IDiscountStrategy, NoDiscount>();
-            Services.AddSingleton<DiscountStrategySelector>();
+            Services.AddScoped<IPayPalService,PayPalPaymentService>();
+            Services.AddScoped<ICreditCardService, CreditCardPaymentService>();
+            Services.AddScoped<HighTierDiscount>();
+            Services.AddScoped<LowTierDiscount>();
+            Services.AddScoped<NoDiscount>();
+            Services.AddScoped<IDiscountStrategySelector>(provider =>
+            {
+                var highTier = provider.GetRequiredService<HighTierDiscount>();
+                var lowTier = provider.GetRequiredService<LowTierDiscount>();
+                var noDiscount = provider.GetRequiredService<NoDiscount>();
+                return new DiscountStrategySelector(highTier, lowTier, noDiscount);
+            });
             Services.Configure<ApiBehaviorOptions>(options =>
             {
                 options.InvalidModelStateResponseFactory = (actionContext) =>

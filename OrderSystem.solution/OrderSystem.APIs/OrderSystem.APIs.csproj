@@ -16,6 +16,7 @@
     <ProjectReference Include="..\OrderSystem.Core\OrderSystem.Core.csproj" />
     <ProjectReference Include="..\OrderSystem.Repository\OrderSystem.Repository.csproj" />
     <ProjectReference Include="..\OrderSystem.Service\OrderSystem.Service.csproj" />
+    <ProjectReference Include="..\OrderSystem.Tests\OrderSystem.Tests.csproj" />
   </ItemGroup>
 
 </Project>

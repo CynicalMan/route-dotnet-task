@@ -27,7 +27,7 @@ namespace OrderSystem.APIs
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c => 
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "OrderSystem", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "OrderSystem", Version = "v1", });
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
@@ -47,7 +47,7 @@ namespace OrderSystem.APIs
 
             var app = builder.Build();
 
-            #region Update Database
+            #region init in-memory database
 
             var scope = app.Services.CreateScope();
             var services = scope.ServiceProvider;
@@ -76,7 +76,6 @@ namespace OrderSystem.APIs
                 app.UseSwaggerUI();
             }
 
-            app.MapIdentityApi<User>();
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();

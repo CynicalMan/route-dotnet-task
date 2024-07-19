@@ -14,17 +14,17 @@ namespace OrderSystem.Service.Services
     public class OrderService : IOrderService
     {
         private readonly IEmailService _emailService;
-        private readonly DiscountStrategySelector _discountStrategySelector;
+        private readonly IDiscountStrategySelector _discountStrategySelector;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly PayPalPaymentService _payPalPaymentService;
-        private readonly CreditCardPaymentService _creditCardPaymentService;
+        private readonly IPayPalService _payPalPaymentService;
+        private readonly ICreditCardService _creditCardPaymentService;
 
         public OrderService(
             IEmailService emailService,
-            DiscountStrategySelector discountStrategySelector,
+            IDiscountStrategySelector discountStrategySelector,
             IUnitOfWork unitOfWork,
-            PayPalPaymentService payPalPaymentService,
-            CreditCardPaymentService creditCardPaymentService)
+            IPayPalService payPalPaymentService,
+            ICreditCardService creditCardPaymentService)
         {
             _emailService = emailService;
             _discountStrategySelector = discountStrategySelector;
@@ -90,8 +90,12 @@ namespace OrderSystem.Service.Services
 
         public void ApplyDiscountsToOrderItems(Order order)
         {
+            if (order == null || order.OrderItems == null) throw new ArgumentNullException();
+
             decimal orderTotal = order.OrderItems.Sum(item => item.Quantity * item.UnitPrice);
             IDiscountStrategy discountStrategy = _discountStrategySelector.SelectStrategy(orderTotal);
+            if (discountStrategy == null) throw new InvalidOperationException("Discount strategy is null.");
+
             decimal discountPercentage = discountStrategy.GetDiscount(orderTotal);
             order.TotalAmount = orderTotal - (orderTotal * discountPercentage);
 
@@ -100,24 +104,27 @@ namespace OrderSystem.Service.Services
                 decimal itemTotalPrice = item.Quantity * item.UnitPrice;
                 decimal itemDiscount = itemTotalPrice * discountPercentage;
                 item.UnitPrice -= item.UnitPrice * discountPercentage;
-                item.Discount = discountPercentage * 100;
+                item.Discount = discountPercentage;
             }
         }
 
-        public async Task UpdateOrderStatusAsync(int orderId, string newStatus)
+
+        public async Task<Order?> UpdateOrderStatusAsync(int orderId, string newStatus)
         {
             var spec = new BaseSpecifications<Order>(o => o.Id == orderId);
             var order = await _unitOfWork.Repository<Order>().GetEntityWithSpecAsync(spec);
             if (order == null)
             {
-                throw new InvalidOperationException("Order not found.");
+                return null;
             }
 
             order.Status = newStatus;
             _unitOfWork.Repository<Order>().Update(order);
             _unitOfWork.Repository<Order>().SaveChanges();
-
+            order.Customer = await _unitOfWork.Repository<Customer>().GetEntityWithSpecAsync(new BaseSpecifications<Customer>(c => c.Id == order.CustomerId));
             _emailService.SendEmail(order.Customer.Email, "Order Status Updated", $"Your order {order.Id} status has been updated to {newStatus}.");
+
+            return order;
         }
 
         public async Task<Order?> CompletePaymentAsync(string payerId, string paymentId)

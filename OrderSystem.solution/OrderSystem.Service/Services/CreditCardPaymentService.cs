@@ -8,10 +8,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using OrderSystem.Core.Entities.Core;
+using OrderSystem.Core.Services;
 
 namespace OrderSystem.Service.Services
 {
-    public class CreditCardPaymentService
+    public class CreditCardPaymentService : ICreditCardService
     {
         private readonly IConfiguration _configuration;
         private readonly string _secretKey;

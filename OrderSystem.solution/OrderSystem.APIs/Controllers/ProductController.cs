@@ -36,7 +36,7 @@ namespace OrderSystem.APIs.Controllers
             _unitOfWork = unitOfWork;
         }
 
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         [HttpPost("")]
         public async Task<ActionResult<ProductDto>> CreateProduct(ProductDto newProduct)
         {
@@ -63,6 +63,32 @@ namespace OrderSystem.APIs.Controllers
             return Ok(product);
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id}")]
+        public async Task<ActionResult<ProductDto>> UpdateProductById(ProductDto newProduct, int id)
+        {
+            var user = await _manager.GetUserMainAsync(User);
+            if (user is null)
+            {
+                return Unauthorized(new ApiResponse(401));
+            }
+            var spec = new BaseSpecifications<Product>(p => p.Id == id);
+            var product = await _unitOfWork.Repository<Product>().GetEntityWithSpecAsync(spec);
+            newProduct.Id = id;
+
+            if (product == null)
+            {
+                return NotFound(new ApiResponse(404, "Product not found"));
+            }
+
+            _mapper.Map(newProduct, product);
+            _unitOfWork.Repository<Product>().Update(product);
+            _unitOfWork.Repository<Product>().SaveChanges();
+
+            var productToReturn = _mapper.Map<Product, ProductDto>(product);
+            return Ok(productToReturn);
+        }
+
         [Authorize]
         [HttpGet("")]
         public async Task<ActionResult<ProductDto>> GetProducts()
@@ -84,7 +110,6 @@ namespace OrderSystem.APIs.Controllers
             var productsToReturn = _mapper.Map<IReadOnlyList<Product>, IReadOnlyList<ProductDto>>(products);
             return Ok(productsToReturn);
         }
-
 
         [Authorize]
         [HttpGet("{id}")]
@@ -110,31 +135,6 @@ namespace OrderSystem.APIs.Controllers
         }
 
 
-        [Authorize]
-        [HttpPut("{id}")]
-        public async Task<ActionResult<ProductDto>> UpdateProductById(ProductDto newProduct, int id)
-        {
-            var user = await _manager.GetUserMainAsync(User);
-            if (user is null)
-            {
-                return Unauthorized(new ApiResponse(401));
-            }
-            var spec = new BaseSpecifications<Product>(p => p.Id == id);
-            var product = await _unitOfWork.Repository<Product>().GetEntityWithSpecAsync(spec);
-            newProduct.Id = id;
-
-            if (product == null)
-            {
-                return NotFound(new ApiResponse(404, "Product not found"));
-            }
-
-            _mapper.Map(newProduct, product);
-            _unitOfWork.Repository<Product>().Update(product);
-            _unitOfWork.Repository<Product>().SaveChanges();
-
-            var productToReturn = _mapper.Map<Product, ProductDto>(product);
-            return Ok(productToReturn);
-        }
 
 
 
