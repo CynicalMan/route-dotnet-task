@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="13.0.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.7" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
@@ -16,10 +16,7 @@
     <ProjectReference Include="..\OrderSystem.Core\OrderSystem.Core.csproj" />
     <ProjectReference Include="..\OrderSystem.Repository\OrderSystem.Repository.csproj" />
     <ProjectReference Include="..\OrderSystem.Service\OrderSystem.Service.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Controllers\" />
+    <ProjectReference Include="..\OrderSystem.Tests\OrderSystem.Tests.csproj" />
   </ItemGroup>
 
 </Project>
